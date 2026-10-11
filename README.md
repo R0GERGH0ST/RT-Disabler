@@ -3,7 +3,7 @@
 [![.NET 9.0](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![Platform Windows](https://img.shields.io/badge/Platform-Windows_10_%2F_11-0078D4?logo=windows&logoColor=white)](https://microsoft.com/windows)
 [![UI WPF](https://img.shields.io/badge/UI-WPF_MVVM-00E5FF)](src/RTFreedom.App)
-[![Tests Passing](https://img.shields.io/badge/Tests-17%2F17_Passed-00E676)](tests/RTFreedom.Tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-19%2F19_Passed-00E676)](tests/RTFreedom.Tests)
 [![License MIT](https://img.shields.io/badge/License-MIT-gray.svg)](LICENSE)
 
 **RT Freedom** is a Windows desktop utility inspired by tools like *DLSS Enabler*, engineered to analyze games with mandatory ray-tracing requirements and provide verified compatibility solutions, performance tuning patches, and fallback redirections where technically feasible.
@@ -27,9 +27,9 @@ Many modern games do not simply enable ray tracing as a post-processing toggle�
 
 | Game | Engine | Graphics API | Ray Tracing Role | Non-RT Fallback | Compatibility Verdict |
 |---|---|---|---|:---:|:---:|
-| **Indiana Jones and the Great Circle** | Modified id Tech 7 | Vulkan (`VK_KHR_ray_tracing_pipeline`) | **Mandatory Global Illumination**; optional reflections & shadows | ❌ None | ❌ **Incompatible on Non-RT GPUs**<br>*(Performance tuning for budget RT GPUs)* |
+| **Indiana Jones and the Great Circle** | Modified id Tech 7 | Vulkan (`VK_KHR_ray_tracing_pipeline`) | **Mandatory Global Illumination**; optional reflections & shadows | ❌ Engine Level<br>⚠️ Compute Fallback | ⚠️ **Experimental for GTX 10xx/16xx**<br>*(Bypass & Compute Emulation Patch)* |
 | **Gears 5** | Unreal Engine 4 | DirectX 12 (`DXR 1.0`) | **Optional Reflections & AO** | ✅ Full (SSR / SSAO) | ✅ **Fully Compatible**<br>*(Safe raster configuration patch)* |
-| **DOOM: The Dark Ages** | id Tech 8 | Vulkan (`VK_KHR_ray_tracing_pipeline`) | **Mandatory Unified Path Tracing** | ❌ None | ❌ **Incompatible on Non-RT GPUs**<br>*(Performance tuning for budget RT GPUs)* |
+| **DOOM: The Dark Ages** | id Tech 8 | Vulkan (`VK_KHR_ray_tracing_pipeline`) | **Mandatory Unified Path Tracing** | ❌ Engine Level<br>⚠️ Compute Fallback | ⚠️ **Experimental for GTX 10xx/16xx**<br>*(Compute RT Fallback Patch)* |
 
 ---
 
@@ -126,7 +126,9 @@ RTFreedom.sln
 
 | GPU Family | RT Hardware | Tier | Indiana Jones | Gears 5 | DOOM: Dark Ages |
 |---|:---:|:---:|:---:|:---:|:---:|
-| **NVIDIA GeForce GTX 10xx / 16xx** | ❌ None | Tier 0 | ❌ Incompatible | ✅ Fully Compatible | ❌ Incompatible |
+| **NVIDIA GeForce GTX 10xx (6GB+)** | ⚠️ Compute Emulation (Driver 425.31+) | Tier 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible | ⚠️ Experimental (Fallback Patch) |
+| **NVIDIA GeForce GTX 16xx (Turing non-RTX)** | ⚠️ Compute Emulation | Tier 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible | ⚠️ Experimental (Fallback Patch) |
+| **Legacy Non-RT (GTX 9xx / GTX 1050)** | ❌ None | Tier 0 | ❌ Incompatible | ✅ Fully Compatible | ❌ Incompatible |
 | **NVIDIA GeForce RTX 20xx** | ✅ DXR 1.0 | Tier 1 | ⚠️ Low Settings | ✅ Fully Compatible | ⚠️ Low Settings |
 | **NVIDIA GeForce RTX 30xx** | ✅ DXR 1.1 | Tier 2 | ✅ Medium/High | ✅ Fully Compatible | ✅ Medium |
 | **NVIDIA GeForce RTX 40xx / 50xx** | ✅ DXR 1.1 + SER | Tier 3 | ✅ Ultra | ✅ Fully Compatible | ✅ High/Ultra |

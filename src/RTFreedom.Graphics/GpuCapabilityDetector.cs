@@ -204,12 +204,23 @@ public class GpuCapabilityDetector
                     features.Add("DXR Tier 1.0");
                 }
             }
-            else if (NvidiaGtxRegex.IsMatch(name))
+            else if (NvidiaGtxRegex.IsMatch(name) || name.Contains("TITAN X", StringComparison.OrdinalIgnoreCase))
             {
-                // GTX 1060 6GB+, GTX 1660 had experimental software DXR fallback, but no hardware RT
+                // GTX 1060 6GB+, 1070, 1080, 1660 have driver-level DXR 1.0 compute shader fallback (Driver 425.31+)
                 tier = 0;
                 supportsRt = false;
                 features.Add("DirectX 12 Rasterization");
+
+                string upper = name.ToUpperInvariant();
+                bool isComputeDxrCapable = upper.Contains("1060") || upper.Contains("1070") ||
+                                          upper.Contains("1080") || upper.Contains("TITAN X") ||
+                                          upper.Contains("1660") || upper.Contains("1650 SUPER");
+                if (isComputeDxrCapable)
+                {
+                    features.Add("DXR Software Emulation (Compute Shader Driver 425.31+)");
+                    features.Add("Vulkan Compute Ray Query Emulation");
+                    features.Add("RT Freedom Experimental Bypass Eligible");
+                }
             }
             else
             {

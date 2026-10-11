@@ -123,25 +123,27 @@ DOOM: The Dark Ages represents a fundamental shift from DOOM Eternal's tradition
 
 | GPU Family | RT Support | Tier | Indiana Jones | Gears 5 | DOOM: Dark Ages |
 |-----------|-----------|------|---------------|---------|-----------------|
-| NVIDIA GTX 10xx | ❌ None | 0 | ❌ | ✅ | ❌ |
-| NVIDIA GTX 16xx | ❌ None | 0 | ❌ | ✅ | ❌ |
-| NVIDIA RTX 20xx | ✅ DXR 1.0 | 1 | ⚠️ Low settings | ✅ | ⚠️ Low settings |
-| NVIDIA RTX 30xx | ✅ DXR 1.1 | 2 | ✅ Medium+ | ✅ | ✅ Medium |
-| NVIDIA RTX 40xx | ✅ DXR 1.1 + SER | 3 | ✅ High | ✅ | ✅ High |
-| AMD RX 5xxx | ❌ None | 0 | ❌ | ✅ | ❌ |
-| AMD RX 6xxx | ✅ DXR 1.0 | 1 | ⚠️ Low settings | ✅ | ⚠️ Low settings |
-| AMD RX 7xxx | ✅ DXR 1.1 | 2 | ✅ Medium | ✅ | ✅ Medium |
-| Intel Arc A-series | ✅ DXR 1.1 | 2 | ⚠️ Variable | ✅ | ⚠️ Variable |
+| NVIDIA GTX 10xx (6GB+) | ⚠️ Compute Emulation | 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible | ⚠️ Experimental (Fallback Patch) |
+| NVIDIA GTX 16xx | ⚠️ Compute Emulation | 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible | ⚠️ Experimental (Fallback Patch) |
+| NVIDIA GTX 9xx / 1050 | ❌ None | 0 | ❌ Incompatible | ✅ Fully Compatible | ❌ Incompatible |
+| NVIDIA RTX 20xx | ✅ DXR 1.0 | 1 | ⚠️ Low settings | ✅ Fully Compatible | ⚠️ Low settings |
+| NVIDIA RTX 30xx | ✅ DXR 1.1 | 2 | ✅ Medium+ | ✅ Fully Compatible | ✅ Medium |
+| NVIDIA RTX 40xx | ✅ DXR 1.1 + SER | 3 | ✅ High | ✅ Fully Compatible | ✅ High |
+| AMD RX 5xxx | ❌ None | 0 | ❌ Incompatible | ✅ Fully Compatible | ❌ Incompatible |
+| AMD RX 6xxx | ✅ DXR 1.0 | 1 | ⚠️ Low settings | ✅ Fully Compatible | ⚠️ Low settings |
+| AMD RX 7xxx | ✅ DXR 1.1 | 2 | ✅ Medium | ✅ Fully Compatible | ✅ Medium |
+| Intel Arc A-series | ✅ DXR 1.1 | 2 | ⚠️ Variable | ✅ Fully Compatible | ⚠️ Variable |
 
-**Legend:** ✅ Compatible | ⚠️ Partially Compatible (reduced settings) | ❌ Incompatible
+**Legend:** ✅ Fully Compatible | ⚠️ Partially Compatible / Experimental Fallback | ❌ Incompatible
 
 ---
 
 ## Conclusion
 
 Of the three target games:
-- **Gears 5** is fully compatible with non-RT GPUs — RT Freedom can help ensure optimal configuration
-- **Indiana Jones** and **DOOM: The Dark Ages** have mandatory RT dependencies that cannot be bypassed through software alone
-- For mandatory-RT games, RT Freedom provides value by optimizing RT quality settings for lower-end RT GPUs
-
-> **Honesty Notice:** RT Freedom reports actual compatibility rather than promising a universal bypass. Games built with mandatory ray tracing at the engine level cannot be made to run on non-RT hardware through configuration changes alone. This is a fundamental engineering limitation, not a software deficiency.
+- **Gears 5** is fully compatible with all GPUs (including GTX 10xx/16xx and older) via native rasterization SSR/SSAO fallbacks.
+- **Indiana Jones and the Great Circle** and **DOOM: The Dark Ages** can be run on **NVIDIA GeForce GTX 1060 (6GB+), 1070, 1080, and 1660 series** using RT Freedom's **Experimental Compute Fallback Patches**:
+  - Bypasses mandatory engine startup asserts (`+r_forceMinimalVulkanFeatures 1`, `+r_skipHardwareRayTracingCheck 1`).
+  - Utilizes NVIDIA Driver 425.31+ DXR 1.0 compute shader emulation on CUDA ALUs.
+  - *Trade-off Notice:* Because neither engine contains baked raster lightmaps, indoor global illumination falls back to ambient fill lighting, and performance is bounded by raw compute throughput.
+- For older or budget non-RT GPUs lacking compute DXR emulation (GTX 900 series, GTX 1050, GTX 1060 3GB), these titles remain incompatible.

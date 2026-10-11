@@ -23,4 +23,25 @@ public record GpuCapabilities(
     bool SupportsDxr12,
     bool SupportsVulkanRayTracing,
     int RayTracingTier,
-    List<string> SupportedFeatures);
+    List<string> SupportedFeatures)
+{
+    /// <summary>
+    /// Gets whether this GPU supports driver-level compute emulation for DXR or ray queries
+    /// (e.g. NVIDIA GTX 1060 6GB+, 1070, 1080, 1080 Ti, Titan X, GTX 1660 series with Driver 425.31+).
+    /// </summary>
+    public bool SupportsComputeRayTracing =>
+        SupportsRayTracing ||
+        SupportsVulkanRayTracing ||
+        SupportedFeatures.Any(f => f.Contains("Compute Shader", StringComparison.OrdinalIgnoreCase) ||
+                                  f.Contains("DXR Software Emulation", StringComparison.OrdinalIgnoreCase)) ||
+        IsPascalOrTuringComputeCapable();
+
+    private bool IsPascalOrTuringComputeCapable()
+    {
+        if (!Vendor.Equals("NVIDIA", StringComparison.OrdinalIgnoreCase)) return false;
+        string n = Name.ToUpperInvariant();
+        return (n.Contains("1060") && VramBytes >= 5L * 1024 * 1024 * 1024) ||
+               n.Contains("1070") || n.Contains("1080") || n.Contains("TITAN X") ||
+               n.Contains("1660") || n.Contains("1650 SUPER");
+    }
+}

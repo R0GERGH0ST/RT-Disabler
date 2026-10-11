@@ -92,20 +92,34 @@ public class DoomDarkAgesAdapter : BaseGameAdapter
             "CallableKHR"
         };
 
+        // Evaluation: check hardware RT vs compute emulation (GTX 1060 6GB+, 1070, 1080, 1660)
         var hasHardwareRt = gpu.SupportsRayTracing || gpu.SupportsVulkanRayTracing;
-        var recommendedLevel = hasHardwareRt
-            ? CompatibilityLevel.PartiallyCompatible
-            : CompatibilityLevel.Incompatible;
+        var hasComputeEmulation = gpu.SupportsComputeRayTracing;
 
-        var assessment = hasHardwareRt
-            ? "DOOM: The Dark Ages is built upon id Tech 8's unified path tracing architecture. Unlike DOOM Eternal which utilized high-speed rasterization with optional ray tracing, The Dark Ages has no raster fallback pipeline. Full ray tracing bypass is NOT feasible. However, on lower-tier RT graphics cards, quality patches can constrain rays per pixel, bounce limits, and denoising passes to maximize performance."
-            : "INCOMPATIBLE: id Tech 8 has removed the legacy rasterization pipeline present in previous DOOM titles. Hardware ray tracing support is strictly required to execute shaders and trace geometry. Attempting to bypass RT on a non-RT GPU will result in engine initialization failure.";
+        CompatibilityLevel recommendedLevel;
+        string assessment;
+
+        if (hasHardwareRt)
+        {
+            recommendedLevel = CompatibilityLevel.PartiallyCompatible;
+            assessment = "DOOM: The Dark Ages is built upon id Tech 8's unified path tracing architecture. Unlike DOOM Eternal which utilized high-speed rasterization with optional ray tracing, The Dark Ages has no raster fallback pipeline. Full ray tracing bypass is NOT feasible. However, on lower-tier RT graphics cards, quality patches can constrain rays per pixel, bounce limits, and denoising passes to maximize performance.";
+        }
+        else if (hasComputeEmulation)
+        {
+            recommendedLevel = CompatibilityLevel.ExperimentalOnly;
+            assessment = "COMPATIBLE VIA EXPERIMENTAL COMPUTE FALLBACK: NVIDIA GeForce GTX 10-series (Pascal) and GTX 16-series (Turing) support driver-level compute shader DXR emulation. Applying the RT Freedom Compute Fallback patch (+r_forceMinimalVulkanFeatures 1, +r_bvh_software_emulation 1, 1 SPP) enables DOOM: The Dark Ages to bypass mandatory hardware checks and execute ray queries on CUDA compute cores. Expect reduced framerates and lower reflection accuracy compared to dedicated RT hardware.";
+        }
+        else
+        {
+            recommendedLevel = CompatibilityLevel.Incompatible;
+            assessment = "INCOMPATIBLE: GPU lacks hardware ray tracing and compute shader DXR emulation capabilities. id Tech 8 has removed the legacy rasterization pipeline present in previous DOOM titles. Attempting to run without RT or compute emulation will result in engine initialization failure.";
+        }
 
         var analysis = new RayTracingAnalysis(
             GameId: GameId,
             Dependencies: dependencies,
             HasNonRTFallback: false,
-            RequiresHardwareRT: true,
+            RequiresHardwareRT: !hasComputeEmulation && !hasHardwareRt,
             FeasibilityAssessment: assessment,
             DetectedDxrCalls: detectedCalls,
             DetectedShaderFeatures: detectedShaders,
@@ -124,10 +138,20 @@ public class DoomDarkAgesAdapter : BaseGameAdapter
         var patches = new List<PatchAction>();
         var targetConfigFile = ResolveConfigFile(game);
 
-        // Honest reporting: full bypass is not feasible; quality reduction is offered
+        // Quality reduction patch for RT-capable GPUs
         patches.Add(new PatchAction(
             Id: "doom-da-opt-pathtracing-low",
-            Description: "Reduce id Tech 8 Path Tracing load (1 sample per pixel, disable secondary indirect bounces, downscaled radiance cache). Note: Full RT bypass is not feasible.",
+            Description: "Reduce id Tech 8 Path Tracing load (1 sample per pixel, disable secondary indirect bounces, downscaled radiance cache) for RT GPUs.",
+            Type: PatchType.ConfigModification,
+            TargetFile: targetConfigFile,
+            BackupFile: null,
+            IsReversible: true,
+            AppliedAt: DateTime.MinValue));
+
+        // Experimental compute fallback patch for GTX 10xx / 16xx
+        patches.Add(new PatchAction(
+            Id: "doom-da-gtx-compute-fallback",
+            Description: "Experimental Compute RT Fallback for GTX 10xx/16xx (Forces minimal Vulkan features, software BVH compute traversal, 1 SPP, downscaled radiance cache). Warning: Compute-intensive on Pascal/Turing.",
             Type: PatchType.ConfigModification,
             TargetFile: targetConfigFile,
             BackupFile: null,
@@ -152,14 +176,34 @@ public class DoomDarkAgesAdapter : BaseGameAdapter
             await backup.CreateBackupAsync(GameId, [targetConfigFile], ct);
         }
 
-        var rtSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        Dictionary<string, string> rtSettings;
+
+        if (patch.Id == "doom-da-gtx-compute-fallback")
         {
-            ["r_pathTracing_spp"] = "1",
-            ["r_pathTracing_maxBounces"] = "1",
-            ["r_radianceCache_resolution"] = "0.5",
-            ["r_denoiser_quality"] = "1",
-            ["r_bvh_update_rate"] = "2"
-        };
+            // Compute fallback settings for GTX 10xx / 16xx
+            rtSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["r_forceMinimalVulkanFeatures"] = "1",
+                ["r_skipHardwareRayTracingCheck"] = "1",
+                ["r_pathTracing_spp"] = "1",
+                ["r_pathTracing_maxBounces"] = "1",
+                ["r_radianceCache_resolution"] = "0.25",
+                ["r_bvh_software_emulation"] = "1",
+                ["r_denoiser_quality"] = "0"
+            };
+        }
+        else
+        {
+            // Standard RT optimization patch
+            rtSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["r_pathTracing_spp"] = "1",
+                ["r_pathTracing_maxBounces"] = "1",
+                ["r_radianceCache_resolution"] = "0.5",
+                ["r_denoiser_quality"] = "1",
+                ["r_bvh_update_rate"] = "2"
+            };
+        }
 
         WriteConfigFile(targetConfigFile, rtSettings);
         return true;
@@ -177,10 +221,18 @@ public class DoomDarkAgesAdapter : BaseGameAdapter
         }
 
         var config = ReadConfigFile(patch.TargetFile);
-        var isValid = config.TryGetValue("r_pathTracing_spp", out var spp) && spp == "1" &&
-                      config.TryGetValue("r_pathTracing_maxBounces", out var bounces) && bounces == "1";
 
-        return Task.FromResult(isValid);
+        if (patch.Id == "doom-da-gtx-compute-fallback")
+        {
+            var isValid = config.TryGetValue("r_forceMinimalVulkanFeatures", out var min) && min == "1" &&
+                          config.TryGetValue("r_skipHardwareRayTracingCheck", out var skip) && skip == "1";
+            return Task.FromResult(isValid);
+        }
+
+        var isStandardValid = config.TryGetValue("r_pathTracing_spp", out var spp) && spp == "1" &&
+                              config.TryGetValue("r_pathTracing_maxBounces", out var bounces) && bounces == "1";
+
+        return Task.FromResult(isStandardValid);
     }
 
     private string ResolveConfigFile(GameInfo game)

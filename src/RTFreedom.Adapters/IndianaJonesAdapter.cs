@@ -94,21 +94,34 @@ public class IndianaJonesAdapter : BaseGameAdapter
             "IntersectionKHR"
         };
 
-        // Honest evaluation: game requires hardware ray tracing
+        // Evaluation: check hardware RT vs compute emulation (GTX 1060 6GB+, 1070, 1080, 1660)
         var hasHardwareRt = gpu.SupportsRayTracing || gpu.SupportsVulkanRayTracing;
-        var recommendedLevel = hasHardwareRt
-            ? CompatibilityLevel.PartiallyCompatible
-            : CompatibilityLevel.Incompatible;
+        var hasComputeEmulation = gpu.SupportsComputeRayTracing;
 
-        var assessment = hasHardwareRt
-            ? "Full ray tracing bypass is NOT feasible for Indiana Jones and the Great Circle. The lighting system strictly relies on hardware ray tracing (Vulkan VK_KHR_ray_tracing_pipeline) for global illumination with no traditional raster lightmap fallback. However, configuration tuning can reduce ray count, bounce depth, and BVH complexity to improve frame rates on entry-level RT GPUs."
-            : "INCOMPATIBLE: Indiana Jones and the Great Circle strictly requires hardware ray tracing support for its global illumination pipeline. Because the engine possesses no baked lighting or raster fallback path, bypassing ray tracing on non-RT hardware will prevent the game from launching or render an entirely black environment.";
+        CompatibilityLevel recommendedLevel;
+        string assessment;
+
+        if (hasHardwareRt)
+        {
+            recommendedLevel = CompatibilityLevel.PartiallyCompatible;
+            assessment = "Full ray tracing bypass is NOT feasible for Indiana Jones and the Great Circle. The lighting system strictly relies on hardware ray tracing (Vulkan VK_KHR_ray_tracing_pipeline) for global illumination with no traditional raster lightmap fallback. However, configuration tuning can reduce ray count, bounce depth, and BVH complexity to improve frame rates on entry-level RT GPUs.";
+        }
+        else if (hasComputeEmulation)
+        {
+            recommendedLevel = CompatibilityLevel.ExperimentalOnly;
+            assessment = "COMPATIBLE VIA EXPERIMENTAL COMPUTE EMULATION: NVIDIA GeForce GTX 10-series (Pascal: 1060 6GB, 1070, 1080) and GTX 16-series (Turing: 1660) support driver-level compute emulation for DXR and Vulkan ray queries (NVIDIA Driver 425.31+). RT Freedom provides the Experimental Hardware RT Check Bypass & Compute Fallback Patch (+r_raytracing 0, +r_forceMinimalVulkanFeatures 1, +r_skipHardwareRayTracingCheck 1) to allow the game to initialize and render on CUDA compute ALUs. Notice: Because id Tech 7 lacks prebaked lightmaps, lighting will be rendered using minimal ambient fallbacks, which may result in darker interiors, and performance depends on GPU compute throughput.";
+        }
+        else
+        {
+            recommendedLevel = CompatibilityLevel.Incompatible;
+            assessment = "INCOMPATIBLE: GPU lacks hardware ray tracing and compute shader DXR emulation capabilities. Because the engine possesses no baked lighting or raster fallback path, bypassing ray tracing on non-RT hardware without compute support will prevent the game from launching or render an entirely black environment.";
+        }
 
         var analysis = new RayTracingAnalysis(
             GameId: GameId,
             Dependencies: dependencies,
             HasNonRTFallback: false,
-            RequiresHardwareRT: true,
+            RequiresHardwareRT: !hasComputeEmulation && !hasHardwareRt,
             FeasibilityAssessment: assessment,
             DetectedDxrCalls: detectedCalls,
             DetectedShaderFeatures: detectedShaders,
@@ -125,20 +138,27 @@ public class IndianaJonesAdapter : BaseGameAdapter
         ArgumentNullException.ThrowIfNull(analysis);
 
         var patches = new List<PatchAction>();
-
         var targetConfigFile = ResolveConfigFile(game);
 
-        // Honest reporting: No full bypass is available. Only quality reduction patch.
-        var qualityOptimizationPatch = new PatchAction(
+        // Quality optimization patch for RT-capable GPUs
+        patches.Add(new PatchAction(
             Id: "ij-opt-rt-quality-low",
-            Description: "Reduce Ray Tracing quality (low ray density, single GI bounce, disable RT reflections). Note: Full RT bypass is not feasible as GI has no raster fallback.",
+            Description: "Reduce Ray Tracing quality (low ray density, single GI bounce, disable RT reflections) for RT GPUs.",
             Type: PatchType.ConfigModification,
             TargetFile: targetConfigFile,
             BackupFile: null,
             IsReversible: true,
-            AppliedAt: DateTime.MinValue);
+            AppliedAt: DateTime.MinValue));
 
-        patches.Add(qualityOptimizationPatch);
+        // Experimental bypass patch for GTX 10xx / 16xx and non-RT GPUs
+        patches.Add(new PatchAction(
+            Id: "ij-gtx-compute-bypass",
+            Description: "Experimental Hardware RT Check Bypass & Compute Fallback for GTX 10xx/16xx (Forces r_raytracing 0, minimal Vulkan features, and bypasses startup hardware assert). Warning: Experimental mode with ambient lighting fallbacks.",
+            Type: PatchType.ConfigModification,
+            TargetFile: targetConfigFile,
+            BackupFile: null,
+            IsReversible: true,
+            AppliedAt: DateTime.MinValue));
 
         return Task.FromResult<IReadOnlyList<PatchAction>>(patches.AsReadOnly());
     }
@@ -158,14 +178,37 @@ public class IndianaJonesAdapter : BaseGameAdapter
             await backup.CreateBackupAsync(GameId, [targetConfigFile], ct);
         }
 
-        var rtSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        Dictionary<string, string> rtSettings;
+
+        if (patch.Id == "ij-gtx-compute-bypass")
         {
-            ["r_rtgi_rays_per_pixel"] = "1",
-            ["r_rtgi_bounces"] = "1",
-            ["r_rt_reflections_enable"] = "0",
-            ["r_rt_shadows_enable"] = "0",
-            ["r_rt_bvh_budget_mb"] = "512"
-        };
+            // Experimental bypass for GTX 10xx / 16xx: bypass launch check, force minimal features, disable RT reflections/shadows
+            rtSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["r_raytracing"] = "0",
+                ["r_forceMinimalVulkanFeatures"] = "1",
+                ["r_skipHardwareRayTracingCheck"] = "1",
+                ["r_rt_reflections_enable"] = "0",
+                ["r_rt_shadows_enable"] = "0",
+                ["r_bvhQuality"] = "0",
+                ["r_renderAPI"] = "1",
+                ["r_rtgi_rays_per_pixel"] = "1",
+                ["r_rtgi_bounces"] = "1",
+                ["r_rt_bvh_budget_mb"] = "256"
+            };
+        }
+        else
+        {
+            // Standard RT optimization patch
+            rtSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["r_rtgi_rays_per_pixel"] = "1",
+                ["r_rtgi_bounces"] = "1",
+                ["r_rt_reflections_enable"] = "0",
+                ["r_rt_shadows_enable"] = "0",
+                ["r_rt_bvh_budget_mb"] = "512"
+            };
+        }
 
         WriteConfigFile(targetConfigFile, rtSettings);
         return true;
@@ -183,10 +226,18 @@ public class IndianaJonesAdapter : BaseGameAdapter
         }
 
         var config = ReadConfigFile(patch.TargetFile);
-        var isValid = config.TryGetValue("r_rtgi_rays_per_pixel", out var rays) && rays == "1" &&
-                      config.TryGetValue("r_rt_reflections_enable", out var refl) && refl == "0";
 
-        return Task.FromResult(isValid);
+        if (patch.Id == "ij-gtx-compute-bypass")
+        {
+            var isValid = config.TryGetValue("r_raytracing", out var rt) && rt == "0" &&
+                          config.TryGetValue("r_skipHardwareRayTracingCheck", out var skip) && skip == "1";
+            return Task.FromResult(isValid);
+        }
+
+        var isStandardValid = config.TryGetValue("r_rtgi_rays_per_pixel", out var rays) && rays == "1" &&
+                              config.TryGetValue("r_rt_reflections_enable", out var refl) && refl == "0";
+
+        return Task.FromResult(isStandardValid);
     }
 
     private string ResolveConfigFile(GameInfo game)
