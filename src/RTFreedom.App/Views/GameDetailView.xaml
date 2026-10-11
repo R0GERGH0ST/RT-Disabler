@@ -1,0 +1,516 @@
+<UserControl x:Class="RTFreedom.App.Views.GameDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:RTFreedom.App.ViewModels"
+             xmlns:models="clr-namespace:RTFreedom.Core.Models;assembly=RTFreedom.Core"
+             xmlns:converters="clr-namespace:RTFreedom.App.Converters"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:GameDetailViewModel}"
+             d:DesignHeight="950" d:DesignWidth="920">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <converters:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
+        <converters:StatusToColorConverter x:Key="StatusToColor" />
+        <converters:CompatibilityToColorConverter x:Key="CompatToColor" />
+    </UserControl.Resources>
+
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="28,20,28,36">
+
+                <!-- TOP NAV ROW: Back Button & Context Header -->
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0"
+                            Command="{Binding BackToLibraryCommand}"
+                            Style="{StaticResource TitleBarButtonStyle}"
+                            Width="36" Height="36"
+                            ToolTip="Return to Library">
+                        <!-- Arrow Left icon -->
+                        <Path Data="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"
+                              Fill="{StaticResource PrimaryAccentBrush}"
+                              Width="16" Height="16"
+                              Stretch="Uniform" />
+                    </Button>
+
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Game Details and RT Bypass Configuration"
+                                   FontSize="12"
+                                   Foreground="{StaticResource SecondaryTextBrush}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- HEADER CARD: Game Identity & Big Compatibility Badge -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left Info -->
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <Border Background="{StaticResource SurfaceBrush}"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Padding="8,3"
+                                        Margin="0,0,8,0">
+                                    <TextBlock Text="{Binding PlatformDisplay}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource PrimaryAccentBrush}" />
+                                </Border>
+
+                                <Border Background="#1C2D48"
+                                        CornerRadius="4"
+                                        Padding="8,3"
+                                        Margin="0,0,8,0">
+                                    <TextBlock Text="{Binding Game.GraphicsApi}"
+                                               FontSize="11"
+                                               Foreground="{StaticResource SecondaryTextBrush}" />
+                                </Border>
+
+                                <Border Background="#143D2A"
+                                        BorderBrush="{StaticResource SuccessBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Padding="8,3"
+                                        Visibility="{Binding Profile.IsPatched, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="ACTIVE PATCHES APPLIED"
+                                               FontSize="10"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource SuccessBrush}" />
+                                </Border>
+                            </StackPanel>
+
+                            <TextBlock Text="{Binding Game.Title}"
+                                       FontSize="28"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" />
+
+                            <TextBlock Text="{Binding Game.InstallPath}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Margin="0,4,0,0"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+
+                        <!-- Right: Big Compatibility Badge -->
+                        <Border Grid.Column="1"
+                                Margin="16,0,0,0"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderThickness="2"
+                                CornerRadius="10"
+                                Padding="18,12"
+                                VerticalAlignment="Center">
+                            <Border.BorderBrush>
+                                <Binding Path="Profile.Compatibility" Converter="{StaticResource CompatToColor}" />
+                            </Border.BorderBrush>
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="COMPATIBILITY"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource SecondaryTextBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding Profile.Compatibility}"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,4,0,0">
+                                    <TextBlock.Foreground>
+                                        <Binding Path="Profile.Compatibility" Converter="{StaticResource CompatToColor}" />
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- HONEST REPORTING WARNING BANNER (For Incompatible or Experimental titles) -->
+                <Border CornerRadius="8"
+                        Padding="16"
+                        Margin="0,0,0,20"
+                        Background="#2B1622"
+                        BorderBrush="{StaticResource ErrorBrush}"
+                        BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="{x:Type Border}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IncompatibilityWarning}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IncompatibilityWarning, Converter={x:Null}}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Alert Icon -->
+                        <Path Grid.Column="0"
+                              Data="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16"
+                              Fill="{StaticResource ErrorBrush}"
+                              Width="22" Height="22"
+                              Stretch="Uniform"
+                              VerticalAlignment="Center"
+                              Margin="0,0,14,0" />
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Compatibility Advisory &amp; Engine Limitation"
+                                       FontSize="14"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource ErrorBrush}" />
+                            <TextBlock Text="{Binding IncompatibilityWarning}"
+                                       FontSize="12"
+                                       Foreground="{StaticResource TextBrush}"
+                                       TextWrapping="Wrap"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ACTION BUTTONS ROW -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20" Padding="14">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Analyze Button -->
+                            <Button Command="{Binding AnalyzeGameCommand}"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Margin="0,0,10,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconRayTracingGeometry}"
+                                          Fill="#0A0E1A"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          Margin="0,0,8,0" />
+                                    <TextBlock Text="Analyze RT Pipeline" Foreground="#0A0E1A" FontWeight="Bold" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Apply All Patches -->
+                            <Button Command="{Binding ApplyAllPatchesCommand}"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Margin="0,0,10,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconShieldGeometry}"
+                                          Fill="{StaticResource TextBrush}"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          Margin="0,0,8,0" />
+                                    <TextBlock Text="Apply All Patches" Foreground="{StaticResource TextBrush}" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Restore Button -->
+                            <Button Command="{Binding RestorePatchCommand}"
+                                    Style="{StaticResource DangerButton}"
+                                    Margin="0,0,10,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"
+                                          Fill="{StaticResource TextBrush}"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          Margin="0,0,8,0" />
+                                    <TextBlock Text="Restore Original" Foreground="{StaticResource TextBrush}" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- View Report -->
+                            <Button Command="{Binding ViewReportCommand}"
+                                    Margin="0,0,10,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconAboutGeometry}"
+                                          Fill="{StaticResource TextBrush}"
+                                          Width="14" Height="14"
+                                          Stretch="Uniform"
+                                          Margin="0,0,8,0" />
+                                    <TextBlock Text="View Report" Foreground="{StaticResource TextBrush}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Experimental Mode Toggle -->
+                        <CheckBox Grid.Column="1"
+                                  IsChecked="{Binding EnableExperimentalMode}"
+                                  Style="{StaticResource ToggleSwitchStyle}"
+                                  VerticalAlignment="Center">
+                            <StackPanel>
+                                <TextBlock Text="Experimental Mode" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                                <TextBlock Text="Allow unsafe shader hooks" FontSize="10" Foreground="{StaticResource MutedTextBrush}" />
+                            </StackPanel>
+                        </CheckBox>
+                    </Grid>
+                </Border>
+
+                <!-- SECTION: RT ANALYSIS & PIPELINE REPORT -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Ray-Tracing Pipeline Analysis" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding AnalysisResult.AnalyzedAt, StringFormat='Analyzed: {0:g}'}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Feasibility Assessment Text -->
+                        <Border Background="{StaticResource SurfaceBrush}"
+                                CornerRadius="6"
+                                Padding="14"
+                                Margin="0,0,0,14">
+                            <TextBlock Text="{Binding AnalysisResult.FeasibilityAssessment, FallbackValue='Click \'Analyze RT Pipeline\' above to inspect executable binaries, DXR calls, SPIR-V shaders, and configuration toggles.'}"
+                                       FontSize="13"
+                                       Foreground="{StaticResource TextBrush}"
+                                       TextWrapping="Wrap" />
+                        </Border>
+
+                        <!-- Discovered Dependencies Table -->
+                        <TextBlock Text="Discovered RT Dependencies:" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding AnalysisResult.Dependencies}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:RTDependency}">
+                                    <Border Background="{StaticResource SurfaceBrush}"
+                                            CornerRadius="6"
+                                            Padding="12,8"
+                                            Margin="0,0,0,6"
+                                            BorderThickness="1"
+                                            BorderBrush="{StaticResource BorderBrush}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="200" />
+                                                <ColumnDefinition Width="120" />
+                                                <ColumnDefinition Width="140" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Feature Name -->
+                                            <TextBlock Grid.Column="0" Text="{Binding Feature}" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" />
+
+                                            <!-- Mandatory Status -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Mandatory: " FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" />
+                                                <TextBlock Text="{Binding IsMandatory}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource WarningBrush}" />
+                                            </StackPanel>
+
+                                            <!-- Fallback Exists -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Fallback: " FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" />
+                                                <TextBlock Text="{Binding HasFallback}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" />
+                                            </StackPanel>
+
+                                            <!-- Description -->
+                                            <TextBlock Grid.Column="3" Text="{Binding Description}" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- SECTION: AVAILABLE ACTIONS / PATCHES -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="Available Compatibility Patches" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,12" />
+
+                        <!-- List of Available Patches -->
+                        <ItemsControl ItemsSource="{Binding AvailablePatches}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:PatchAction}">
+                                    <Border Background="{StaticResource SurfaceBrush}"
+                                            CornerRadius="6"
+                                            Padding="14"
+                                            Margin="0,0,0,8"
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Description}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextBrush}" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="Target: " FontSize="11" Foreground="{StaticResource MutedTextBrush}" />
+                                                    <TextBlock Text="{Binding TargetFile}" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" />
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <Button Grid.Column="1"
+                                                    Content="Apply Patch"
+                                                    Style="{StaticResource PrimaryButton}"
+                                                    Padding="14,6"
+                                                    Command="{Binding DataContext.ApplyPatchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty Patches Message -->
+                        <TextBlock Text="No specific patch actions generated yet. Run 'Analyze RT Pipeline' to evaluate."
+                                   FontSize="12"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   Margin="0,8,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AvailablePatches.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- SECTION: BACKUPS & RECOVERY SNAPSHOTS -->
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="File Backup Snapshots (Safe Rollback)" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                            <Button Grid.Column="1"
+                                    Command="{Binding CreateBackupCommand}"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="10,4"
+                                    Content="Create Snapshot" />
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding BackupList}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:BackupManifest}">
+                                    <Border Background="{StaticResource SurfaceBrush}"
+                                            CornerRadius="6"
+                                            Padding="12,10"
+                                            Margin="0,0,0,6"
+                                            BorderThickness="1"
+                                            BorderBrush="{StaticResource BorderBrush}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='Snapshot: {0:g}'}" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                                                    <TextBlock Text="{Binding Entries.Count, StringFormat=' ({0} files protected)'}" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding BackupId}" FontSize="10" Foreground="{StaticResource MutedTextBrush}" Margin="0,2,0,0" />
+                                            </StackPanel>
+
+                                            <Button Grid.Column="1"
+                                                    Content="Restore This"
+                                                    Style="{StaticResource DangerButton}"
+                                                    Padding="10,4"
+                                                    Command="{Binding DataContext.RestoreBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty Backups Message -->
+                        <TextBlock Text="No file backups currently exist for this title."
+                                   FontSize="12"
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   Margin="0,4,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding BackupList.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- REPORT MODAL DIALOG OVERLAY -->
+        <Border Background="#CC0A0E1A"
+                Visibility="{Binding ShowReportDialog, Converter={StaticResource BoolToVis}}"
+                Padding="32">
+            <Border Width="720"
+                    MaxHeight="600"
+                    Style="{StaticResource CardBorderStyle}"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource PrimaryAccentBrush}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Diagnostic Analysis Report" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,14" />
+
+                    <Border Grid.Row="1" Background="{StaticResource BackgroundBrush}" CornerRadius="6" Padding="12">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <TextBox Text="{Binding ReportContent}"
+                                     IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Foreground="{StaticResource TextBrush}"
+                                     FontFamily="Consolas, Courier New"
+                                     FontSize="12" />
+                        </ScrollViewer>
+                    </Border>
+
+                    <Button Grid.Row="2"
+                            Content="Close"
+                            Style="{StaticResource PrimaryButton}"
+                            Command="{Binding CloseReportCommand}"
+                            HorizontalAlignment="Right"
+                            Margin="0,14,0,0"
+                            Padding="20,8" />
+                </Grid>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>

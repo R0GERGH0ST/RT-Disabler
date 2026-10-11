@@ -1,0 +1,194 @@
+<UserControl x:Class="RTFreedom.App.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:RTFreedom.App.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
+             d:DesignHeight="800" d:DesignWidth="850">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,24,32,36">
+
+            <!-- Title Header -->
+            <TextBlock Text="Settings &amp; Preferences" FontSize="26" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+            <TextBlock Text="Configure backup storage, game scanning behavior, and diagnostic tools"
+                       FontSize="13" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,4,0,24" />
+
+            <!-- SECTION 1: GENERAL PREFERENCES -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="General Preferences" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
+
+                    <!-- Auto-detect Toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Auto-detect Games on Startup" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Text="Automatically scan Steam, Epic Games, and Xbox stores when the app launches."
+                                       FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1"
+                                  IsChecked="{Binding AutoDetectGames}"
+                                  Style="{StaticResource ToggleSwitchStyle}"
+                                  VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Experimental Patches Toggle -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Display Experimental Patches" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Text="Enable experimental shader patches and configuration bypasses for titles without official adapters."
+                                       FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <CheckBox Grid.Column="1"
+                                  IsChecked="{Binding ShowExperimentalFeatures}"
+                                  Style="{StaticResource ToggleSwitchStyle}"
+                                  VerticalAlignment="Center" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- SECTION 2: PATHS & STORAGE -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Paths &amp; Backup Storage" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
+
+                    <!-- Backup Root Path -->
+                    <TextBlock Text="Backup Storage Directory" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,4" />
+                    <TextBlock Text="Directory where SHA-256 pre-patch snapshot archives and manifests are safely kept."
+                               FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,0,0,8" />
+
+                    <Grid Margin="0,0,0,18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding BackupPath, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1"
+                                Content="Open in Explorer"
+                                Command="{Binding OpenBackupFolderCommand}"
+                                Margin="10,0,0,0"
+                                Padding="12,6" />
+                    </Grid>
+
+                    <!-- Custom Game Scanning Directories -->
+                    <TextBlock Text="Custom Game Directories" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,4" />
+                    <TextBlock Text="Add additional directories to scan for standalone or non-store game installations."
+                               FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,0,0,8" />
+
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding NewCustomPathInput, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1"
+                                Content="Add Folder"
+                                Command="{Binding AddCustomPathCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                Margin="10,0,0,0"
+                                Padding="14,6" />
+                    </Grid>
+
+                    <ListBox ItemsSource="{Binding CustomGamePaths}"
+                             SelectedItem="{Binding SelectedCustomPath}"
+                             MaxHeight="120"
+                             Margin="0,0,0,8">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceBrush}"
+                                        CornerRadius="4"
+                                        Padding="10,6"
+                                        Margin="0,0,0,4">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding}" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" />
+                                        <Button Grid.Column="1"
+                                                Content="Remove"
+                                                Style="{StaticResource DangerButton}"
+                                                Padding="8,2"
+                                                FontSize="11"
+                                                Command="{Binding DataContext.RemoveCustomPathCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+
+            <!-- SECTION 3: APPEARANCE -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Appearance &amp; Theme" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Active Theme" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Text="Midnight Gaming Dark Theme with Neon Cyan (#00E5FF) and Violet (#7C4DFF) accents."
+                                       FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" SelectedIndex="0" Width="160">
+                            <ComboBoxItem Content="Midnight Dark (Default)" />
+                        </ComboBox>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- SECTION 4: DIAGNOSTICS & LOGS -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,24">
+                <StackPanel>
+                    <TextBlock Text="Diagnostics &amp; System Logs" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,16" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Application Activity Logs" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Text="Clear stored operational and crash diagnostic log files."
+                                       FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Content="Clear Log Files"
+                                Style="{StaticResource DangerButton}"
+                                Command="{Binding ClearLogsCommand}"
+                                Padding="12,6" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- FOOTER BUTTONS: SAVE & RESET -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Reset Defaults"
+                        Command="{Binding ResetCommand}"
+                        Margin="0,0,12,0"
+                        Padding="16,8" />
+                <Button Content="Save Preferences"
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding SaveCommand}"
+                        Padding="20,8" />
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

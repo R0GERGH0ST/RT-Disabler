@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationTitle>RT Freedom</ApplicationTitle>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <!-- Application Icon: will be loaded if Assets/app-icon.ico is present -->
+    <!-- <ApplicationIcon>Assets/app-icon.ico</ApplicationIcon> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RTFreedom.Core\RTFreedom.Core.csproj" />
+    <ProjectReference Include="..\RTFreedom.GameDetection\RTFreedom.GameDetection.csproj" />
+    <ProjectReference Include="..\RTFreedom.Graphics\RTFreedom.Graphics.csproj" />
+    <ProjectReference Include="..\RTFreedom.Adapters\RTFreedom.Adapters.csproj" />
+    <ProjectReference Include="..\RTFreedom.Backup\RTFreedom.Backup.csproj" />
+    <ProjectReference Include="..\RTFreedom.Diagnostics\RTFreedom.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="System.Management" Version="9.0.2" />
+  </ItemGroup>
+
+</Project>

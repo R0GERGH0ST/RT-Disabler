@@ -1,0 +1,110 @@
+## ==============================================================================
+## RT Freedom — Git Ignore Configuration
+## Covers: .NET 9, C#, WPF, Visual Studio, VS Code, JetBrains, Windows & Project Data
+## ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Build Results & Intermediate Artifacts
+# ------------------------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Tt]est[Rr]esult*/
+TestResults/
+build/
+publish/
+artifacts/
+
+# Visual Studio build targets & outputs
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in[Dd]ebug/
+[Bb]in[Rr]elease/
+
+# ------------------------------------------------------------------------------
+# Visual Studio Project & Workspace Files
+# ------------------------------------------------------------------------------
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+*.launch
+*.psess
+*.vsp
+*.vspx
+*.sap
+*.cache
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains Rider / ReSharper
+.idea/
+_ReSharper*/
+*.ReSharper
+*.DotSettings.user
+*.sln.iml
+
+# ------------------------------------------------------------------------------
+# NuGet Package Artifacts
+# ------------------------------------------------------------------------------
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+packages/
+.nuget/
+
+# ------------------------------------------------------------------------------
+# Diagnostics, Crash Dumps & Profiling
+# ------------------------------------------------------------------------------
+*.log
+*.dmp
+*.mdmp
+*.crash
+crash-reports/
+CrashReports/
+reports/
+Reports/
+
+# ------------------------------------------------------------------------------
+# RT Freedom Runtime & Local User Data
+# ------------------------------------------------------------------------------
+backups/
+Backups/
+manual_games.json
+*.patch.backup
+
+# ------------------------------------------------------------------------------
+# Operating System Files
+# ------------------------------------------------------------------------------
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
