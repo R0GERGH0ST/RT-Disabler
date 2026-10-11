@@ -51,36 +51,34 @@ The game uses id Tech 7 with significant modifications for Vulkan-based ray trac
 
 ---
 
-### 2. Gears 5
+### 2. Gears of War: E-Day
 
 | Property | Value |
 |----------|-------|
-| **Engine** | Unreal Engine 4 |
+| **Engine** | Unreal Engine 5 (UE5.5+) |
 | **Rendering API** | DirectX 12 |
-| **RT Extensions** | DXR 1.0 (optional) |
-| **Mandatory RT** | No |
-| **Optional RT** | Reflections |
-| **Non-RT Fallback** | ✅ Full rasterized renderer |
-| **Compatibility** | ✅ Fully Compatible |
+| **RT Extensions** | Hardware Lumen (DXR 1.1), Nanite RTX Mega Geometry, MegaLights |
+| **Mandatory RT** | No (Engine contains Software Lumen fallback) |
+| **Optional RT** | Hardware Lumen GI, Hardware Reflections, MegaLights RT Shadows |
+| **Non-RT Fallback** | ✅ Full Software Lumen (Mesh Distance Fields & Screen Traces) |
+| **Compatibility** | ✅ Fully Compatible (via Software Lumen Redirection) |
 
 #### Analysis Details
 
-Gears 5 uses Unreal Engine 4 with DirectX 12. Ray-traced reflections were added as an optional visual enhancement and are not required for the game to run.
+*Gears of War: E-Day* by The Coalition is developed on Unreal Engine 5, featuring Nanite virtualized geometry, Lumen global illumination, MegaLights, and NVIDIA RTX Mega Geometry.
 
 **Key findings:**
-- The game has a complete screen-space reflections (SSR) fallback
-- RT can be toggled off in the game's graphics settings
-- DXR functions are loaded conditionally based on hardware support
-- The game runs correctly on GPUs without any RT support
-- No mandatory RT acceleration structure initialization
+- At High/Ultra quality presets, the engine leverages DirectX Raytracing (DXR) for Hardware Lumen and dynamic Nanite shadow ray testing.
+- However, Unreal Engine 5 features an architecture-level **Software Lumen** fallback that computes indirect lighting and reflections via Signed Distance Fields (Mesh Distance Fields / Global Distance Fields) and screen traces using standard compute shaders.
+- By intercepting engine CVars and configuration directives, RT Freedom can cleanly instruct the engine to route lighting through Software Distance Fields (`r.Lumen.HardwareRayTracing 0`, `r.DistanceFields 1`, `r.RayTracing.Shadows 0`).
+- This completely removes mandatory BVH acceleration structure building without breaking rendering or crashing.
 
 **What RT Freedom can do:**
-- ✅ Verify RT is properly disabled in configuration
-- ✅ Patch configuration files to force rasterized rendering
-- ✅ Confirm game version compatibility
-- ✅ Full backup and restore of configuration
+- ✅ Apply the **Software Lumen Fallback Patch** to force signed distance field tracing and Virtual Shadow Maps (VSM).
+- ✅ Optimize MegaLights cascade count and resolution bias for budget DirectX 12 GPUs.
+- ✅ Full SHA-256 backup and instant rollback of `GameUserSettings.ini`.
 
-**Recommendation:** No special action needed. The game supports non-RT GPUs natively. RT Freedom can ensure RT settings are properly disabled.
+**Recommendation:** Fully compatible with NVIDIA GeForce GTX 10xx (6GB+), GTX 16xx, and all DirectX 12 Feature Level 12_0 GPUs via the RT Freedom Software Lumen Fallback patch.
 
 ---
 
@@ -121,15 +119,15 @@ DOOM: The Dark Ages represents a fundamental shift from DOOM Eternal's tradition
 
 ## GPU Compatibility Matrix
 
-| GPU Family | RT Support | Tier | Indiana Jones | Gears 5 | DOOM: Dark Ages |
-|-----------|-----------|------|---------------|---------|-----------------|
-| NVIDIA GTX 10xx (6GB+) | ⚠️ Compute Emulation | 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible | ⚠️ Experimental (Fallback Patch) |
-| NVIDIA GTX 16xx | ⚠️ Compute Emulation | 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible | ⚠️ Experimental (Fallback Patch) |
-| NVIDIA GTX 9xx / 1050 | ❌ None | 0 | ❌ Incompatible | ✅ Fully Compatible | ❌ Incompatible |
+| GPU Family | RT Support | Tier | Indiana Jones | Gears of War: E-Day | DOOM: Dark Ages |
+|-----------|-----------|------|---------------|---------------------|-----------------|
+| NVIDIA GTX 10xx (6GB+) | ⚠️ Compute Emulation | 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible (Software Lumen) | ⚠️ Experimental (Fallback Patch) |
+| NVIDIA GTX 16xx | ⚠️ Compute Emulation | 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible (Software Lumen) | ⚠️ Experimental (Fallback Patch) |
+| NVIDIA GTX 9xx / 1050 | ❌ None | 0 | ❌ Incompatible | ⚠️ Partially Compatible | ❌ Incompatible |
 | NVIDIA RTX 20xx | ✅ DXR 1.0 | 1 | ⚠️ Low settings | ✅ Fully Compatible | ⚠️ Low settings |
 | NVIDIA RTX 30xx | ✅ DXR 1.1 | 2 | ✅ Medium+ | ✅ Fully Compatible | ✅ Medium |
 | NVIDIA RTX 40xx | ✅ DXR 1.1 + SER | 3 | ✅ High | ✅ Fully Compatible | ✅ High |
-| AMD RX 5xxx | ❌ None | 0 | ❌ Incompatible | ✅ Fully Compatible | ❌ Incompatible |
+| AMD RX 5xxx | ❌ None | 0 | ❌ Incompatible | ⚠️ Partially Compatible | ❌ Incompatible |
 | AMD RX 6xxx | ✅ DXR 1.0 | 1 | ⚠️ Low settings | ✅ Fully Compatible | ⚠️ Low settings |
 | AMD RX 7xxx | ✅ DXR 1.1 | 2 | ✅ Medium | ✅ Fully Compatible | ✅ Medium |
 | Intel Arc A-series | ✅ DXR 1.1 | 2 | ⚠️ Variable | ✅ Fully Compatible | ⚠️ Variable |
@@ -141,7 +139,7 @@ DOOM: The Dark Ages represents a fundamental shift from DOOM Eternal's tradition
 ## Conclusion
 
 Of the three target games:
-- **Gears 5** is fully compatible with all GPUs (including GTX 10xx/16xx and older) via native rasterization SSR/SSAO fallbacks.
+- **Gears of War: E-Day** is fully compatible with NVIDIA GeForce GTX 10xx/16xx and DirectX 12 GPUs via RT Freedom's **Software Lumen Fallback Patch**, which redirects Unreal Engine 5's hardware ray tracing passes to signed distance fields and screen traces without crash risk.
 - **Indiana Jones and the Great Circle** and **DOOM: The Dark Ages** can be run on **NVIDIA GeForce GTX 1060 (6GB+), 1070, 1080, and 1660 series** using RT Freedom's **Experimental Compute Fallback Patches**:
   - Bypasses mandatory engine startup asserts (`+r_forceMinimalVulkanFeatures 1`, `+r_skipHardwareRayTracingCheck 1`).
   - Utilizes NVIDIA Driver 425.31+ DXR 1.0 compute shader emulation on CUDA ALUs.

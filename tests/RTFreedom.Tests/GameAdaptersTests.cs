@@ -65,7 +65,7 @@ public class GameAdaptersTests
         Assert.Equal(3, adapters.Count);
 
         var indyGame = new GameInfo("indy-1", "Indiana Jones and the Great Circle", @"C:\Games\Indy\TheGreatCircle.exe", @"C:\Games\Indy", "1.0", "Bethesda", GamePlatform.Steam, RenderingApi.Vulkan, [], [], DateTime.UtcNow);
-        var gearsGame = new GameInfo("gears-1", "Gears 5", @"C:\Games\Gears5\Gears5.exe", @"C:\Games\Gears5", "1.0", "Xbox", GamePlatform.Steam, RenderingApi.DirectX12, [], [], DateTime.UtcNow);
+        var gearsGame = new GameInfo("gears-1", "Gears of War: E-Day", @"C:\Games\Gears\GearGame\Binaries\Win64\GearsEDay.exe", @"C:\Games\Gears", "1.0", "Xbox Game Studios", GamePlatform.Steam, RenderingApi.DirectX12, [], [], DateTime.UtcNow);
         var doomGame = new GameInfo("doom-1", "DOOM: The Dark Ages", @"C:\Games\Doom\DoomTheDarkAges.exe", @"C:\Games\Doom", "1.0", "Bethesda", GamePlatform.Steam, RenderingApi.Vulkan, [], [], DateTime.UtcNow);
 
         Assert.IsType<IndianaJonesAdapter>(registry.GetAdapter(indyGame));
@@ -116,20 +116,21 @@ public class GameAdaptersTests
     }
 
     [Fact]
-    public async Task GearsOfWarAdapter_MarksGears5AsFullyCompatibleOnGtxAndLegacy()
+    public async Task GearsOfWarAdapter_MarksEDayAsFullyCompatibleViaSoftwareLumen()
     {
         var adapter = new GearsOfWarAdapter();
-        var game = new GameInfo("gears-1", "Gears 5", @"C:\Games\Gears5\Gears5.exe", @"C:\Games\Gears5", "1.0", "Xbox", GamePlatform.Steam, RenderingApi.DirectX12, [], [], DateTime.UtcNow);
+        var game = new GameInfo("gears-eday-1", "Gears of War: E-Day", @"C:\Games\Gears\GearGame\Binaries\Win64\GearsEDay.exe", @"C:\Games\Gears", "1.0", "Xbox Game Studios", GamePlatform.Steam, RenderingApi.DirectX12, [], [], DateTime.UtcNow);
 
         var analysis = await adapter.AnalyzeAsync(game, _gtxPascalGpu);
 
         Assert.Equal(CompatibilityLevel.FullyCompatible, analysis.RecommendedLevel);
         Assert.True(analysis.HasNonRTFallback);
         Assert.False(analysis.RequiresHardwareRT);
+        Assert.Contains("SOFTWARE LUMEN FALLBACK", analysis.FeasibilityAssessment);
 
         var patches = await adapter.GetAvailablePatchesAsync(game, analysis);
         Assert.NotEmpty(patches);
-        Assert.Contains(patches, p => p.Type == PatchType.ConfigModification);
+        Assert.Contains(patches, p => p.Id == "gears-eday-software-lumen-fallback");
     }
 
     [Fact]

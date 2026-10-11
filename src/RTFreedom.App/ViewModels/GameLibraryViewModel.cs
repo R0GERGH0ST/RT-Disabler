@@ -87,7 +87,7 @@ public partial class GameLibraryViewModel : ViewModelBase
                     profile.Compatibility = target.Value switch
                     {
                         TargetGame.IndianaJonesAndTheGreatCircle => CompatibilityLevel.Incompatible,
-                        TargetGame.Gears5 => CompatibilityLevel.FullyCompatible,
+                        TargetGame.GearsOfWarEDay => CompatibilityLevel.FullyCompatible,
                         TargetGame.DoomTheDarkAges => CompatibilityLevel.Incompatible,
                         _ => CompatibilityLevel.Unknown
                     };

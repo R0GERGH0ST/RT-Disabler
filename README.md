@@ -28,7 +28,7 @@ Many modern games do not simply enable ray tracing as a post-processing toggle�
 | Game | Engine | Graphics API | Ray Tracing Role | Non-RT Fallback | Compatibility Verdict |
 |---|---|---|---|:---:|:---:|
 | **Indiana Jones and the Great Circle** | Modified id Tech 7 | Vulkan (`VK_KHR_ray_tracing_pipeline`) | **Mandatory Global Illumination**; optional reflections & shadows | ❌ Engine Level<br>⚠️ Compute Fallback | ⚠️ **Experimental for GTX 10xx/16xx**<br>*(Bypass & Compute Emulation Patch)* |
-| **Gears 5** | Unreal Engine 4 | DirectX 12 (`DXR 1.0`) | **Optional Reflections & AO** | ✅ Full (SSR / SSAO) | ✅ **Fully Compatible**<br>*(Safe raster configuration patch)* |
+| **Gears of War: E-Day** | Unreal Engine 5 | DirectX 12 (`DXR 1.1`) | **Lumen, MegaLights, RT Shadows** | ✅ Software Lumen (Distance Fields) | ✅ **Fully Compatible**<br>*(Software Lumen Fallback Patch)* |
 | **DOOM: The Dark Ages** | id Tech 8 | Vulkan (`VK_KHR_ray_tracing_pipeline`) | **Mandatory Unified Path Tracing** | ❌ Engine Level<br>⚠️ Compute Fallback | ⚠️ **Experimental for GTX 10xx/16xx**<br>*(Compute RT Fallback Patch)* |
 
 ---
@@ -87,7 +87,7 @@ RTFreedom.sln
 │   ├── RTFreedom.Adapters/      # Plugin engine & game compatibility adapters
 │   │   ├── AdapterRegistry.cs        # Thread-safe adapter discovery
 │   │   ├── IndianaJonesAdapter.cs    # id Tech 7 Vulkan RT GI analysis & tuning
-│   │   ├── GearsOfWarAdapter.cs      # Gears 5 optional RT raster fallback patch
+│   │   ├── GearsOfWarAdapter.cs      # Gears of War: E-Day UE5 Software Lumen fallback patch
 │   │   └── DoomDarkAgesAdapter.cs    # id Tech 8 path tracing analysis & tuning
 │   │
 │   ├── RTFreedom.Backup/        # Data integrity and rollback management
@@ -124,7 +124,7 @@ RTFreedom.sln
 
 ## 💻 Hardware Compatibility Matrix
 
-| GPU Family | RT Hardware | Tier | Indiana Jones | Gears 5 | DOOM: Dark Ages |
+| GPU Family | RT Hardware | Tier | Indiana Jones | Gears of War: E-Day | DOOM: Dark Ages |
 |---|:---:|:---:|:---:|:---:|:---:|
 | **NVIDIA GeForce GTX 10xx (6GB+)** | ⚠️ Compute Emulation (Driver 425.31+) | Tier 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible | ⚠️ Experimental (Fallback Patch) |
 | **NVIDIA GeForce GTX 16xx (Turing non-RTX)** | ⚠️ Compute Emulation | Tier 0-E | ⚠️ Experimental (Bypass Patch) | ✅ Fully Compatible | ⚠️ Experimental (Fallback Patch) |

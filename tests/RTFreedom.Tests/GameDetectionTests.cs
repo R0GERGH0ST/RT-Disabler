@@ -59,14 +59,14 @@ public class GameDetectionTests
     }
 
     [Fact]
-    public void GameIdentifier_IdentifiesGears5()
+    public void GameIdentifier_IdentifiesGearsOfWarEDay()
     {
         var game = new GameInfo(
-            Id: "steam-1097840",
-            Title: "Gears 5",
-            ExecutablePath: @"C:\Games\Steam\steamapps\common\Gears5\GearGame\Binaries\Win64\Gears5.exe",
-            InstallPath: @"C:\Games\Steam\steamapps\common\Gears5",
-            Version: "1.1.0",
+            Id: "steam-2837240",
+            Title: "Gears of War: E-Day",
+            ExecutablePath: @"C:\Games\Steam\steamapps\common\Gears of War E-Day\GearGame\Binaries\Win64\GearsEDay.exe",
+            InstallPath: @"C:\Games\Steam\steamapps\common\Gears of War E-Day",
+            Version: "1.0.0",
             Publisher: "Xbox Game Studios",
             Platform: GamePlatform.Steam,
             GraphicsApi: RenderingApi.DirectX12,
@@ -77,7 +77,7 @@ public class GameDetectionTests
 
         var recognized = GameIdentifier.IdentifyTargetGame(game);
         Assert.NotNull(recognized);
-        Assert.Equal(TargetGame.Gears5, recognized.Value);
+        Assert.Equal(TargetGame.GearsOfWarEDay, recognized.Value);
         Assert.Equal(RenderingApi.DirectX12, GameIdentifier.GetRenderingApi(recognized.Value.ToString()));
     }
 

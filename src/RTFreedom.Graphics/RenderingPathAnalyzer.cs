@@ -264,6 +264,23 @@ public class RenderingPathAnalyzer
             );
         }
 
+        // Gears of War: E-Day: Unreal Engine 5 with Software Lumen fallback
+        if (title.Contains("e-day") || title.Contains("eday") || title.Contains("gears"))
+        {
+            return new RenderingPathAssessment(
+                HasNonRTFallback: true,
+                RequiresHardwareRT: false,
+                RecommendedLevel: CompatibilityLevel.FullyCompatible,
+                FeasibilityAssessment: "Gears of War: E-Day utilizes Unreal Engine 5 with Lumen and Nanite. While High/Ultra presets engage DXR Hardware Ray Tracing, UE5 possesses a native Software Lumen fallback (Signed Distance Fields and Screen Traces). Hardware ray tracing can be bypassed completely without rendering failure.",
+                Dependencies:
+                [
+                    new RTDependency("Lumen Global Illumination", RTFeature.RayTracedGI, false, true, "Software Lumen Distance Fields fallback available."),
+                    new RTDependency("Lumen Reflections", RTFeature.RayTracedReflections, false, true, "Software Lumen screen traces and surface cache available."),
+                    new RTDependency("Ray-Traced Shadows", RTFeature.RayTracedShadows, false, true, "Virtual Shadow Maps (VSM) raster fallback available.")
+                ]
+            );
+        }
+
         return null;
     }
 }

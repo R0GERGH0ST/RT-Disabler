@@ -85,13 +85,13 @@ public class GraphicsAnalysisTests : IDisposable
     }
 
     [Fact]
-    public async Task RenderingPathAnalyzer_AccuratelyEvaluatesGears5RasterFallback()
+    public async Task RenderingPathAnalyzer_AccuratelyEvaluatesGearsOfWarEDaySoftwareLumenFallback()
     {
         var analyzer = new RenderingPathAnalyzer();
         var game = new GameInfo(
-            Id: "gears-1",
-            Title: "Gears 5",
-            ExecutablePath: @"C:\Games\Gears\Gears5.exe",
+            Id: "gears-eday-1",
+            Title: "Gears of War: E-Day",
+            ExecutablePath: @"C:\Games\Gears\GearGame\Binaries\Win64\GearsEDay.exe",
             InstallPath: @"C:\Games\Gears",
             Version: "1.0",
             Publisher: "Xbox Game Studios",
@@ -103,9 +103,9 @@ public class GraphicsAnalysisTests : IDisposable
         );
 
         var scanResult = new DxrScanResult(
-            DetectedDxrCalls: ["CreateStateObject"],
-            DetectedShaderFeatures: [],
-            ScannedBinaries: ["Gears5.exe"],
+            DetectedDxrCalls: ["CreateStateObject", "DispatchRays"],
+            DetectedShaderFeatures: ["RayQuery"],
+            ScannedBinaries: ["GearsEDay.exe"],
             ScannedShaders: []
         );
 
@@ -113,6 +113,7 @@ public class GraphicsAnalysisTests : IDisposable
 
         Assert.True(assessment.HasNonRTFallback);
         Assert.False(assessment.RequiresHardwareRT);
-        Assert.True(assessment.RecommendedLevel is CompatibilityLevel.FullyCompatible or CompatibilityLevel.PartiallyCompatible);
+        Assert.Equal(CompatibilityLevel.FullyCompatible, assessment.RecommendedLevel);
+        Assert.Contains("Software Lumen", assessment.FeasibilityAssessment);
     }
 }

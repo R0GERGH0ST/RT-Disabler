@@ -15,10 +15,10 @@ public enum TargetGame
     IndianaJonesAndTheGreatCircle,
 
     /// <summary>
-    /// Gears 5 (The Coalition / Xbox Game Studios).
-    /// DirectX 12 screen space and ray-traced shadows/reflections.
+    /// Gears of War: E-Day (The Coalition / Xbox Game Studios).
+    /// Unreal Engine 5 Lumen (Hardware RT vs Software Distance Fields), Nanite, MegaLights.
     /// </summary>
-    Gears5,
+    GearsOfWarEDay,
 
     /// <summary>
     /// DOOM: The Dark Ages (id Software / Bethesda).
@@ -37,18 +37,18 @@ public static class GameIdentifier
 
     // Steam AppIDs
     public const string SteamIdIndianaJones = "2677660";
-    public const string SteamIdGears5 = "1097840";
+    public const string SteamIdGearsEDay = "2837240"; // Gears of War: E-Day Steam ID
     public const string SteamIdDoomDarkAges = "3017860";
 
     // Epic Games Store App Names / Catalog Item IDs
     public const string EpicIdIndianaJones = "60ec252ba0e5443a9f0290ca881765c9";
     public const string EpicNameIndianaJones = "GreatCircle";
-    public const string EpicIdGears5 = "Gears5";
+    public const string EpicIdGearsEDay = "GearsOfWarEDay";
     public const string EpicIdDoomDarkAges = "DOOMTheDarkAges";
 
     // Xbox / Windows Store Package Family Names / Prefixes
     public const string XboxPackageIndianaJones = "BethesdaSoftworks.IndianaJonesandtheGreatCircle";
-    public const string XboxPackageGears5 = "Microsoft.HalifaxBaseGame";
+    public const string XboxPackageGearsEDay = "Microsoft.GearsOfWarEDay";
     public const string XboxPackageDoomDarkAges = "BethesdaSoftworks.DOOMTheDarkAges";
 
     #endregion
@@ -60,37 +60,30 @@ public static class GameIdentifier
     /// <returns>The recognized <see cref="TargetGame"/> or null if not a target game.</returns>
     public static TargetGame? IdentifyTargetGame(GameInfo game)
     {
-        if (game == null)
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(game);
 
-        // Match by Platform ID first
+        // 1. Check by ID (Steam AppID or catalog ID)
         var byId = IdentifyById(game.Id);
         if (byId.HasValue)
         {
             return byId;
         }
 
-        // Match by Title
+        // 2. Check by Title
         var byTitle = IdentifyByTitle(game.Title);
         if (byTitle.HasValue)
         {
             return byTitle;
         }
 
-        // Match by Executable Name
-        if (!string.IsNullOrWhiteSpace(game.ExecutablePath))
+        // 3. Check by Executable filename
+        var byExe = IdentifyByExecutable(game.ExecutablePath);
+        if (byExe.HasValue)
         {
-            var fileName = Path.GetFileNameWithoutExtension(game.ExecutablePath);
-            var byExe = IdentifyByExecutable(fileName);
-            if (byExe.HasValue)
-            {
-                return byExe;
-            }
+            return byExe;
         }
 
-        // Match by Install Folder Name
+        // 4. Check by Install Path
         if (!string.IsNullOrWhiteSpace(game.InstallPath))
         {
             var folderName = Path.GetFileName(game.InstallPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
@@ -105,24 +98,24 @@ public static class GameIdentifier
     }
 
     /// <summary>
-    /// Identifies a target game by unique platform ID or package name.
+    /// Identifies a target game by its platform application or package ID.
     /// </summary>
-    /// <param name="gameId">The platform specific identifier or app ID.</param>
+    /// <param name="id">The platform ID or AppID string.</param>
     /// <returns>The recognized <see cref="TargetGame"/> or null.</returns>
-    public static TargetGame? IdentifyById(string gameId)
+    public static TargetGame? IdentifyById(string? id)
     {
-        if (string.IsNullOrWhiteSpace(gameId))
+        if (string.IsNullOrWhiteSpace(id))
         {
             return null;
         }
 
-        var normalized = gameId.Trim();
+        var normalized = id.Trim();
 
         // Steam AppIDs
         if (normalized.Equals(SteamIdIndianaJones, StringComparison.OrdinalIgnoreCase))
             return TargetGame.IndianaJonesAndTheGreatCircle;
-        if (normalized.Equals(SteamIdGears5, StringComparison.OrdinalIgnoreCase))
-            return TargetGame.Gears5;
+        if (normalized.Equals(SteamIdGearsEDay, StringComparison.OrdinalIgnoreCase) || normalized.Equals("1097840", StringComparison.OrdinalIgnoreCase))
+            return TargetGame.GearsOfWarEDay;
         if (normalized.Equals(SteamIdDoomDarkAges, StringComparison.OrdinalIgnoreCase))
             return TargetGame.DoomTheDarkAges;
 
@@ -130,18 +123,19 @@ public static class GameIdentifier
         if (normalized.Contains(EpicIdIndianaJones, StringComparison.OrdinalIgnoreCase) ||
             normalized.Contains(EpicNameIndianaJones, StringComparison.OrdinalIgnoreCase))
             return TargetGame.IndianaJonesAndTheGreatCircle;
-        if (normalized.Contains(EpicIdGears5, StringComparison.OrdinalIgnoreCase))
-            return TargetGame.Gears5;
+        if (normalized.Contains(EpicIdGearsEDay, StringComparison.OrdinalIgnoreCase) || normalized.Contains("Gears", StringComparison.OrdinalIgnoreCase))
+            return TargetGame.GearsOfWarEDay;
         if (normalized.Contains(EpicIdDoomDarkAges, StringComparison.OrdinalIgnoreCase))
             return TargetGame.DoomTheDarkAges;
 
         // Xbox Package Names
         if (normalized.StartsWith(XboxPackageIndianaJones, StringComparison.OrdinalIgnoreCase) ||
-            normalized.Contains("IndianaJones", StringComparison.OrdinalIgnoreCase) && normalized.Contains("GreatCircle", StringComparison.OrdinalIgnoreCase))
+            (normalized.Contains("IndianaJones", StringComparison.OrdinalIgnoreCase) && normalized.Contains("GreatCircle", StringComparison.OrdinalIgnoreCase)))
             return TargetGame.IndianaJonesAndTheGreatCircle;
-        if (normalized.StartsWith(XboxPackageGears5, StringComparison.OrdinalIgnoreCase) ||
+        if (normalized.StartsWith(XboxPackageGearsEDay, StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains("GearsOfWar", StringComparison.OrdinalIgnoreCase) ||
             normalized.Contains("Halifax", StringComparison.OrdinalIgnoreCase))
-            return TargetGame.Gears5;
+            return TargetGame.GearsOfWarEDay;
         if (normalized.StartsWith(XboxPackageDoomDarkAges, StringComparison.OrdinalIgnoreCase) ||
             normalized.Contains("DOOMTheDarkAges", StringComparison.OrdinalIgnoreCase))
             return TargetGame.DoomTheDarkAges;
@@ -169,11 +163,12 @@ public static class GameIdentifier
             return TargetGame.IndianaJonesAndTheGreatCircle;
         }
 
-        if (normalized.Contains("Gears 5", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Equals("Gears5", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Contains("Gears of War 5", StringComparison.OrdinalIgnoreCase))
+        if (normalized.Contains("E-Day", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains("EDay", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains("Gears of War", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains("Gears 5", StringComparison.OrdinalIgnoreCase))
         {
-            return TargetGame.Gears5;
+            return TargetGame.GearsOfWarEDay;
         }
 
         if (normalized.Contains("Dark Ages", StringComparison.OrdinalIgnoreCase) ||
@@ -205,11 +200,12 @@ public static class GameIdentifier
             return TargetGame.IndianaJonesAndTheGreatCircle;
         }
 
-        if (normalized.Equals("Gears5", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Equals("GearGame", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Equals("GearGame-Win64-Shipping", StringComparison.OrdinalIgnoreCase))
+        if (normalized.Contains("GearsEDay", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Contains("EDay", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Equals("GearsOfWarEDay", StringComparison.OrdinalIgnoreCase) ||
+            normalized.Equals("GearGame", StringComparison.OrdinalIgnoreCase))
         {
-            return TargetGame.Gears5;
+            return TargetGame.GearsOfWarEDay;
         }
 
         if (normalized.Equals("DoomTheDarkAges", StringComparison.OrdinalIgnoreCase) ||
@@ -223,10 +219,10 @@ public static class GameIdentifier
     }
 
     /// <summary>
-    /// Gets the standard graphics rendering API utilized by the target game.
+    /// Returns the primary graphics API (DirectX 12 or Vulkan) associated with the target game.
     /// </summary>
     /// <param name="gameId">The game identifier, title, or target enum string representation.</param>
-    /// <returns>The <see cref="RenderingApi"/> used by the game, or Unknown.</returns>
+    /// <returns>The identified <see cref="RenderingApi"/>.</returns>
     public static RenderingApi GetRenderingApi(string gameId)
     {
         var target = IdentifyById(gameId) ?? IdentifyByTitle(gameId) ?? IdentifyByExecutable(gameId);
@@ -238,7 +234,7 @@ public static class GameIdentifier
         return target switch
         {
             TargetGame.IndianaJonesAndTheGreatCircle => RenderingApi.Vulkan,
-            TargetGame.Gears5 => RenderingApi.DirectX12,
+            TargetGame.GearsOfWarEDay => RenderingApi.DirectX12,
             TargetGame.DoomTheDarkAges => RenderingApi.Vulkan,
             _ => RenderingApi.Unknown
         };
@@ -265,11 +261,11 @@ public static class GameIdentifier
                 Path.Combine("base", "default.cfg"),
                 "TheGreatCircle.ini"
             },
-            TargetGame.Gears5 => new[]
+            TargetGame.GearsOfWarEDay => new[]
             {
                 Path.Combine("GearGame", "Config", "DefaultEngine.ini"),
                 Path.Combine("GearGame", "Config", "DefaultScalability.ini"),
-                Path.Combine("GearGame", "Config", "DefaultGame.ini")
+                Path.Combine("GearGame", "Saved", "Config", "Windows", "GameUserSettings.ini")
             },
             TargetGame.DoomTheDarkAges => new[]
             {
@@ -301,7 +297,7 @@ public static class GameIdentifier
                 Path.Combine("base", "renderprogs", "vk_pipeline_cache.bin"),
                 Path.Combine("base", "renderprogs", "vulkan_pc.spv")
             },
-            TargetGame.Gears5 => new[]
+            TargetGame.GearsOfWarEDay => new[]
             {
                 Path.Combine("GearGame", "Content", "ShaderCache.upk"),
                 Path.Combine("GearGame", "Content", "D3D12ShaderCache.bin")
@@ -330,11 +326,12 @@ public static class GameIdentifier
                 "IndianaJones.exe",
                 Path.Combine("Binaries", "Win64", "TheGreatCircle.exe")
             },
-            TargetGame.Gears5 => new[]
+            TargetGame.GearsOfWarEDay => new[]
             {
-                Path.Combine("GearGame", "Binaries", "Win64", "Gears5.exe"),
-                Path.Combine("GearGame", "Binaries", "Win64", "GearGame.exe"),
-                "Gears5.exe"
+                Path.Combine("GearGame", "Binaries", "Win64", "GearsEDay.exe"),
+                Path.Combine("GearGame", "Binaries", "Win64", "GearsOfWarEDay.exe"),
+                "GearsEDay.exe",
+                "GearGame.exe"
             },
             TargetGame.DoomTheDarkAges => new[]
             {
@@ -356,7 +353,7 @@ public static class GameIdentifier
         return target switch
         {
             TargetGame.IndianaJonesAndTheGreatCircle => "Bethesda Softworks / MachineGames",
-            TargetGame.Gears5 => "Xbox Game Studios / The Coalition",
+            TargetGame.GearsOfWarEDay => "Xbox Game Studios / The Coalition",
             TargetGame.DoomTheDarkAges => "Bethesda Softworks / id Software",
             _ => "Unknown"
         };
@@ -372,7 +369,7 @@ public static class GameIdentifier
         return target switch
         {
             TargetGame.IndianaJonesAndTheGreatCircle => "Indiana Jones and the Great Circle",
-            TargetGame.Gears5 => "Gears 5",
+            TargetGame.GearsOfWarEDay => "Gears of War: E-Day",
             TargetGame.DoomTheDarkAges => "DOOM: The Dark Ages",
             _ => target.ToString()
         };
